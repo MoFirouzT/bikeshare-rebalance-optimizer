@@ -24,6 +24,30 @@ This charter is this project's, not a standard. Delete what does not apply here 
 what does; what is not negotiable is that the charter exists, that a subset of it is
 machine-checked, and that it says which.
 
+### Clarity outranks brevity
+
+When the two conflict, clarity wins. A rewrite aims first at the message a reader who has
+seen none of the surrounding work can take on one pass, and only then compresses it.
+Never the reverse: text compressed first and clarified afterwards keeps whatever the
+compression broke, because the author can still read their own meaning into it.
+
+Brevity is what is left after clarity, not a budget clarity is spent from. A short
+sentence that has to be asked about was not brief; it was incomplete, and the question it
+provokes costs more than the words it saved.
+
+The failures are specific, and all of them look tight on the page:
+
+| Symptom | Example | What it costs |
+| --- | --- | --- |
+| An idiom standing in for a causal chain | "the missing routes are what rung 2 turns on" | The reader has to guess the mechanism |
+| A pronoun pointing at a list or a section | "what the archive shows of **this**" | Resolves to nothing specific |
+| A compressed noun naming a combination without its parts | "what is less common is **the join**" | Joining what to what |
+| A verb used in a guessed sense | "§7 **costs** the alternative" | Reads as a noun first, then has to be re-parsed |
+| A deictic with no nearby referent | "it is a kill criterion **there**" | "There" was two clauses ago |
+
+**Test before shipping a sentence:** could a reader who has not seen the conversation that
+produced it parse it on one read? If not, the sentence is not finished, however short.
+
 ### Word choice
 
 **Use the most common word that is exactly as precise.** A less common word must earn
@@ -90,6 +114,27 @@ parsing the span as math at all.
    lives is good practice on top of this, not instead of it.
 6. **No cold jargon.** Define or link any term or symbol at first use.
 7. **If it is spatial, draw it.** One small SVG beats a dense paragraph.
+8. **lint: a section says what is true now, never how it got that way.** When a decision
+   changes a section, rewrite the section as though it had always read that way and put
+   the reasoning in `docs/decisions/`. Do not annotate it in place. Retrospective
+   phrasing belongs to the decision record and to nothing else; `scripts/lint_docs.py`
+   holds the list and gates it everywhere but there.
+
+   Rewriting is where clarity outranks brevity most sharply: aim at the message, compress
+   afterwards. A section rewritten short and unclear has to be rewritten again.
+
+   The cost of getting this wrong is not one clumsy paragraph. Each annotation is
+   defensible by itself, so nothing stops the next one, and a document accretes its own
+   edit history until a reader has to reconstruct the current design from a changelog.
+   The shape to watch for: a section that has grown several times without ever being
+   rewritten. Rewriting is the cheaper operation, because the alternative is that every
+   future reader pays.
+
+   Two things this does not forbid, because they state current status rather than
+   history: marking a section as describing unbuilt work, and recording a rule this
+   project deliberately does not follow, which CLAUDE.md's Overrides section exists for.
+   A dropped rule that is simply deleted is indistinguishable from one that was
+   forgotten.
 
 ### Prose mechanics
 
@@ -106,7 +151,12 @@ parsing the span as math at all.
 11. **lint: no career or self-positioning language in committed files.** The gated
     words are listed in `scripts/lint_docs.py`; strategy stays in the gitignored
     `planning/` log.
-12. **Reader confusion is data.** When someone trips on a passage, capture the fix as a
+12. **lint: no bare release names in committed files.** Which releases exist, which one
+    may end the project, and which is dropped first are decisions about the project
+    rather than engineering in it, so they stay in `planning/` with the rest of the
+    strategy. A committed file names the gate or the spec it means. Phase IDs are not
+    release names and stay legal: `R2.1` passes, a bare `R2` does not. <!-- lint-ok -->
+13. **Reader confusion is data.** When someone trips on a passage, capture the fix as a
     glossary gotcha or an FAQ entry, not a one-off reply.
-13. **Anti-patterns are explicit:** say what not to do. Agents and readers both follow
+14. **Anti-patterns are explicit:** say what not to do. Agents and readers both follow
     that well.

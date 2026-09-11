@@ -11,6 +11,7 @@ loudly instead:
   - no line contains an em dash                                       [if adopted]
   - every file stays under the line cap, exemptions aside
   - no forbidden (career / positioning) word anywhere
+  - no bare release name (``R2``) in a committed file; phase IDs (``R2.1``) are fine
   - no coined ``-able`` / ``-ability`` word that is not a real adjective
   - canonical docs carry an ``*Assumes:*`` line naming what they take as given
   - cross-doc ``file.md#anchor`` links resolve to a real heading
@@ -18,6 +19,7 @@ loudly instead:
   - a spec marked ``Implemented`` records an outcome for every box, and carries the
     ``Decisions`` section that the indexes send readers to
   - specs carry no instruction that was already carried out
+  - no document narrates its own edit history outside the places that record it
   - a spec's ``pkg.x.y`` references name real modules or attributes   [if configured]
   - a ``<canonical>.md §<ID>`` reference anywhere in the repo names a section that
     file actually has                                                 [if configured]
@@ -55,6 +57,14 @@ LINE_CAP_EXEMPT: set[str] = set()
 # The committed Markdown in scope.
 DOC_PATHS = sorted((ROOT / "docs").glob("**/*.md")) + [ROOT / "README.md"]
 
+# Tier 0 (`planning/`) is gitignored and absent in CI, so it is scanned only when it is
+# there, and only for the retrospective check. The other rules do not apply to it: it
+# has no line cap because it is one long document by design, and the forbidden words are
+# forbidden in *committed* files precisely because Tier 0 is where they belong. The
+# retrospective rule does apply, because that is the document this repo actually watched
+# swell, and a rule enforced only where the problem is not is theatre.
+TIER0_PATHS = sorted((ROOT / "planning").glob("**/*.md"))
+
 # Canonical docs that must orient their reader. Paths relative to ROOT.
 CANONICAL: list[str] = [
     "docs/architecture.md",
@@ -76,6 +86,14 @@ FORBIDDEN = re.compile(
     r"|anti-candidate)\b",
     re.IGNORECASE,
 )
+
+# Bare release names, which are the same rule as FORBIDDEN wearing different clothes:
+# which releases exist, which one may end the project, and which is dropped first are
+# decisions *about* the project rather than engineering *in* it, so they stay Tier 0. A
+# committed file says what this project does and what it found, never how far it means
+# to go. Phase IDs are not release names and must keep working, so `R2.1` is allowed and
+# only the bare `R2` is caught. Set to None to disable.
+RELEASE_NAME = re.compile(r"\bR\d+\b(?!\.\d)")
 
 # Per-phase work orders. The template and the index are exempt from the spec checks.
 SPEC_DIR = ROOT / "docs" / "specs"
@@ -100,6 +118,33 @@ STALE_INTENT = re.compile(
     r"(to be recorded as ADRs|to record in `?docs/references\.md|when the module lands)",
     re.IGNORECASE,
 )
+
+# A section states what is true now. When a decision changes it, the section is
+# rewritten and the reasoning goes to the decision record, so a reader meets the current
+# design rather than the sediment of how it got here. Without this check the sediment
+# accumulates silently: each "an earlier draft said" is defensible on its own and the
+# twentieth one has doubled the document.
+#
+# RETROSPECTIVE_HOMES are the files that legitimately narrate change: a decision record
+# says what it replaced and why the old reading was wrong, and a changelog is nothing
+# else. Everywhere else, this phrasing is a section that was annotated when it should
+# have been rewritten. A line that must quote one ends with `<!-- lint-ok -->`.
+CHECK_RETROSPECTIVE = True
+RETROSPECTIVE = re.compile(
+    r"(used to (?:say|call|be|read|carry|claim)"
+    r"|an earlier (?:draft|version)|the earlier (?:draft|version)"
+    r"|a previous (?:draft|version)|the previous (?:draft|version)"
+    r"|in an earlier|that draft (?:said|claimed)"
+    r"|was previously|were previously|previously (?:said|called|decided|claimed)"
+    r"|this (?:section|document|file) used to"
+    r"|no longer says|has been renamed from|was renamed from"
+    r"|replaces an? (?:earlier|unverified|older))",
+    re.IGNORECASE,
+)
+RETROSPECTIVE_HOMES = {
+    "docs/decisions",          # the record of what was replaced and why
+    "CHANGELOG.md",
+}
 
 CHECK_MATH = True
 CHECK_EM_DASH = True
@@ -220,6 +265,12 @@ DEPENDS_LINE = re.compile(r"\*\*Depends on:\*\*(.*)")
 
 SPECS = sorted(SPEC_DIR.glob("*.md")) if SPEC_DIR.exists() else []
 SPEC_FILES = [p for p in SPECS if p.name not in SPEC_EXEMPT]
+
+
+def _narrates_change(path: Path) -> bool:
+    """True for the files whose job is to record what changed."""
+    name = rel(path)
+    return any(name == home or name.startswith(home + "/") for home in RETROSPECTIVE_HOMES)
 
 
 def rel(path: Path) -> str:
@@ -436,10 +487,11 @@ def check_canonical_sections(errors: list[str]) -> None:
 def main() -> int:
     errors: list[str] = []
 
-    for path in DOC_PATHS:
+    for path in DOC_PATHS + TIER0_PATHS:
+        tier0 = path in TIER0_PATHS
         lines = path.read_text(encoding="utf-8").splitlines()
 
-        if len(lines) > MAX_LINES and rel(path) not in LINE_CAP_EXEMPT:
+        if not tier0 and len(lines) > MAX_LINES and rel(path) not in LINE_CAP_EXEMPT:
             errors.append(
                 f"{rel(path)}: {len(lines)} lines over the {MAX_LINES}-line cap: split it, "
                 "or add it to LINE_CAP_EXEMPT if it grows by design"
@@ -451,18 +503,26 @@ def main() -> int:
             if "<!-- lint-ok" in line:
                 continue
 
-            for match in FORBIDDEN.finditer(line):
+            for match in () if tier0 else FORBIDDEN.finditer(line):
                 errors.append(
                     f"{rel(path)}:{n}: forbidden word {match.group(0)!r}: strategy stays Tier 0"
                 )
 
-            if CHECK_EM_DASH and EM_DASH in line:
+            if RELEASE_NAME is not None and not tier0:
+                for match in RELEASE_NAME.finditer(line):
+                    errors.append(
+                        f"{rel(path)}:{n}: release name {match.group(0)!r}: how far the project "
+                        "intends to go stays Tier 0; name the gate or spec instead, or write "
+                        f"the phase ID ({match.group(0)}.1) if that is what is meant"
+                    )
+
+            if CHECK_EM_DASH and not tier0 and EM_DASH in line:
                 errors.append(
                     f"{rel(path)}:{n}: {line.count(EM_DASH)} em dash(es) on one line; "
                     "use a colon, semicolon, comma, period, or parentheses"
                 )
 
-            if CHECK_COINED_WORDS and WORD_LIST is not None:
+            if CHECK_COINED_WORDS and not tier0 and WORD_LIST is not None:
                 for match in COINED_WORD.finditer(line):
                     word = match.group(1)
                     if _is_real_word(word):
@@ -473,7 +533,7 @@ def main() -> int:
                         "REAL_ADJECTIVES if this really is a word)"
                     )
 
-            if CHECK_MATH:
+            if CHECK_MATH and not tier0:
                 for match in MATH_SPACING.finditer(line):
                     errors.append(
                         f"{rel(path)}:{n}: LaTeX spacing macro {match.group(0)!r} in math; "
@@ -486,6 +546,14 @@ def main() -> int:
                             f"{rel(path)}:{n}: inline math {match.group(0)!r} starts/ends with a "
                             "space; GitHub may not parse it as math"
                         )
+
+            if CHECK_RETROSPECTIVE and not _narrates_change(path):
+                for match in RETROSPECTIVE.finditer(line):
+                    errors.append(
+                        f"{rel(path)}:{n}: {match.group(0)!r} narrates this document's own "
+                        "history; rewrite the section to say what is true now and put the "
+                        "reasoning in docs/decisions/"
+                    )
 
             if path in SPEC_FILES:
                 for match in STALE_INTENT.finditer(line):
@@ -521,7 +589,8 @@ def main() -> int:
         print(f"\n{len(errors)} issue(s), {WORD_LIST_NOTE}. See docs/conventions.md.")
         return 1
 
-    print(f"Doc lint: OK ({len(DOC_PATHS)} files, {WORD_LIST_NOTE}).")
+    tier0_note = f" + {len(TIER0_PATHS)} Tier 0" if TIER0_PATHS else ""
+    print(f"Doc lint: OK ({len(DOC_PATHS)} files{tier0_note}, {WORD_LIST_NOTE}).")
     return 0
 
 

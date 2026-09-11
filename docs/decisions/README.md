@@ -13,8 +13,8 @@ replaced and why the old reading was wrong. Nothing is preserved in a state know
 false.
 
 History is not this directory's job: the build record is the
-[ledger](../specs/README.md), and the reasoning trail for any delivery unit is in its
-work order under Decisions. Measurements are different again: a study in
+[ledger](../specs/README.md), and the reasoning trail for any phase is in its
+spec under Decisions. Measurements are different again: a study in
 [`studies/`](../studies) is never rewritten and never retired, because evidence does not
 expire. See the plugin's own record, *Records are curated; measurements are durable*.
 

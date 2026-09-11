@@ -1,6 +1,6 @@
-# Work orders and the ledger
+# Phase specs and the ledger
 
-Each {{UNIT}} of this project was built from a frozen work order in this directory:
+Each phase of this project was built from a frozen spec in this directory:
 scope, interfaces, and the test contract, reviewed before any code was written. This
 file indexes them and records what each one concluded.
 
@@ -9,25 +9,25 @@ file indexes them and records what each one concluded.
 
 ---
 
-## The unit and the label
+## The phase and the label
 
-The unit of work here is the **{{UNIT}}**. Delivery labels, if this project uses them,
+The unit of work here is the **phase**. Delivery labels, if this project uses them,
 record the order things were built and are not architecture; reader-facing documents
 name capabilities instead.
 
-Filenames name their subject, so a capability delivered over several units has one work
-order, and a capability whose later units answered a different question has several.
+Filenames name their subject, so a capability delivered over several phases has one
+spec, and a capability whose later phases answered a different question has several.
 
-| Capability | Work orders | Labels | Packages |
+| Capability | Phase specs | Labels | Packages |
 | --- | --- | --- | --- |
 | | | | |
 
 ## In flight
 
-Approved-but-unbuilt and draft work orders are listed separately because they carry no
-ledger row: a row records what was found, and an unbuilt unit has found nothing.
+Approved-but-unbuilt and draft specs are listed separately because they carry no
+ledger row: a row records what was found, and an unbuilt phase has found nothing.
 
-| Work order | Label | Status | What it proposes |
+| Spec | Label | Status | What it proposes |
 | --- | --- | --- | --- |
 | | | | |
 
@@ -35,12 +35,12 @@ ledger row: a row records what was found, and an unbuilt unit has found nothing.
 
 ## The ledger
 
-One row per {{UNIT}}, oldest first. Dates are the implementing commit's date. The
+One row per phase, oldest first. Dates are the implementing commit's date. The
 **finding** column is the point: what it established, including when the answer was
 "no". This ledger is the project's history, which is why the decision records do not
 have to be.
 
-| {{UNIT_TITLE}} | Date | Capability | What changed | Finding |
+| Phase | Date | Capability | What changed | Finding |
 | --- | --- | --- | --- | --- |
 | | | | | |
 
@@ -48,7 +48,7 @@ have to be.
 
 ## Where the detail lives
 
-This ledger is deliberately one line each. Every unit's design detail, its
+This ledger is deliberately one line each. Every phase's design detail, its
 resolved decision trail, and what it ruled out are in its own spec, under
 **Decisions**, which is where a reader should go for the reasoning.
 
@@ -59,7 +59,7 @@ resolved decision trail, and what it ruled out are in its own spec, under
 2. Human review and approval, before any implementation.
 3. Write the golden and property tests first, failing.
 4. Implement to green.
-5. Move the work order from **In flight** to a ledger row, and update
+5. Move the spec from **In flight** to a ledger row, and update
    [STATE.md](../STATE.md).
 
 Resolve each open question in place, keeping the proposal, so the section becomes the

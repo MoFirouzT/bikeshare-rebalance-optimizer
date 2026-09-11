@@ -43,6 +43,26 @@ The gated words are in `scripts/lint_docs.py`.
 **Writing:** committed docs follow `docs/conventions.md`, which is this project's own
 charter and says which of its rules are machine-checked. Read it before writing docs.
 
+**Substantial edits are rewrites, not annotations.** When a change alters what a section
+means, rewrite the whole section so it reads as though it had always said that, and put
+the reasoning in `docs/decisions/` (or, in Tier 0, the plan's own decisions section).
+Never leave the old reading in place next to the new one. This applies to
+`planning/` as much as to committed docs, and `scripts/lint_docs.py` checks the phrasing
+in both.
+
+Two triggers, either one is enough:
+
+- A section grows by more than about half while being edited. Stop and rewrite it whole
+  before moving on; do not leave it for later, because later is a separate task nobody
+  scheduled.
+- An edit adds a sentence about what the document used to say. That sentence is the
+  reasoning, and the reasoning goes to the decision record.
+
+**Clarity outranks brevity.** Aim first at the message a reader who has seen none of the
+surrounding work can take on one pass, then compress it. Never compress first and clarify
+after: the author can still read their own meaning into broken text, so the break
+survives. A short sentence that has to be asked about was not brief, it was incomplete.
+
 ## 3. Layering
 
 Dependencies run one way, from data upward. A module never imports from a layer above
