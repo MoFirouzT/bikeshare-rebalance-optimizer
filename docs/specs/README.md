@@ -29,7 +29,6 @@ ledger row: a row records what was found, and an unbuilt phase has found nothing
 
 | Spec | Label | Status | What it proposes |
 | --- | --- | --- | --- |
-| | | | |
 
 ---
 

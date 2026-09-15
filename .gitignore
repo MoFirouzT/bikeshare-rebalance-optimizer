@@ -218,3 +218,13 @@ __marimo__/
 .streamlit/secrets.toml
 
 /planning
+
+# Harvested feeds and archives, never committed
+/data
+
+# Live GBFS polling, parked: not collected by this project for now (see STATE.md)
+/src/bikeshare/data/gbfs_poller.py
+/tests/golden/test_gbfs_poller_golden.py
+/tests/property/test_gbfs_poller_properties.py
+/tests/fixtures/gbfs/
+/docs/specs/gbfs-poller.md
